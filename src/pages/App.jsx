@@ -1,45 +1,194 @@
+import { useState, useEffect } from 'react'
 import './style.scss'
-import { Form, Input, Select } from '@arco-design/web-react'
+import { Table, Input, Select, Tooltip } from '@arco-design/web-react'
+import { IconPlusCircleFill, IconMinusCircleFill } from '@arco-design/web-react/icon'
+import { IS_PROD } from '@/constant.js'
+import { copy } from '@/utils.js'
 
 function App() {
-  const [form] = Form.useForm()
-
-  chrome.storage.sync.get('websiteConfigs', (data) => {
-    form.setFieldsValue(data.websiteConfigs)
-  })
-
-  function formChange() {
-    chrome.storage.sync.set({ websiteConfigs: form.getFieldsValue() })
-  }
+  const background = IS_PROD && chrome.extension.getBackgroundPage()
 
   const storageOptions = [
     { label: 'Local Storage', value: 'localStorage' },
-    { label: 'Session Storage', value: 'SessionStorage' },
+    { label: 'Session Storage', value: 'sessionStorage' },
     { label: 'Cookie', value: 'cookie' },
+  ]
+
+  const [configs, setConfigs] = useState([{}])
+
+  useEffect(() => {
+    IS_PROD &&
+      chrome.storage.sync.get('websiteConfigs', (data) => {
+        setConfigs(data.websiteConfigs)
+      })
+  }, [])
+
+  function addConfig() {
+    setConfigs([...configs, {}])
+    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
+    background.init()
+  }
+
+  function removeConfig(key) {
+    if (configs.length > 1) {
+      setConfigs(configs.filter((item, index) => key !== index))
+      IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
+      background.init()
+    }
+  }
+
+  function changeFromDomain(key, value) {
+    setConfigs(
+      configs.map((item, index) => {
+        if (index === key) item.fromDomain = value
+        return item
+      }),
+    )
+    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
+    background.init()
+  }
+
+  function changeToDomain(key, value) {
+    setConfigs(
+      configs.map((item, index) => {
+        if (index === key) item.toDomain = value
+        return item
+      }),
+    )
+    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
+    background.init()
+  }
+
+  function changeStorage(key, value) {
+    setConfigs(
+      configs.map((item, index) => {
+        if (index === key) item.storage = value
+        return item
+      }),
+    )
+    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
+    background.init()
+  }
+
+  function changeField(key, value) {
+    setConfigs(
+      configs.map((item, index) => {
+        if (index === key) item.field = value
+        return item
+      }),
+    )
+    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
+    background.init()
+  }
+
+  const columns = [
+    {
+      title: 'From Domain',
+      dataIndex: 'fromDomain',
+      render: (value, record, index) => {
+        return (
+          <Input
+            allowClear
+            value={value}
+            onChange={(value) => {
+              changeFromDomain(index, value)
+            }}
+          />
+        )
+      },
+    },
+    {
+      title: 'To Domain',
+      dataIndex: 'toDomain',
+      render: (value, record, index) => {
+        return (
+          <Input
+            allowClear
+            value={value}
+            onChange={(value) => {
+              changeToDomain(index, value)
+            }}
+          />
+        )
+      },
+    },
+    {
+      title: 'Storage',
+      width: 170,
+      dataIndex: 'storage',
+      render: (value, record, index) => {
+        return (
+          <Select
+            allowClear
+            value={value}
+            options={storageOptions}
+            onChange={(value) => {
+              changeStorage(index, value)
+            }}
+          />
+        )
+      },
+    },
+    {
+      title: 'Field',
+      width: 100,
+      dataIndex: 'field',
+      render: (value, record, index) => {
+        return (
+          <Input
+            allowClear
+            value={value}
+            onChange={(value) => {
+              changeField(index, value)
+            }}
+          />
+        )
+      },
+    },
+    {
+      title: 'Token',
+      width: 100,
+      dataIndex: 'token',
+      render: (value) => {
+        return (
+          <Tooltip content="点击复制">
+            {
+              <Input
+                readOnly
+                value={value}
+                title="点击复制"
+                style={{ cursor: 'pointer' }}
+                onClick={() => {
+                  copy(value)
+                }}
+              />
+            }
+          </Tooltip>
+        )
+      },
+    },
+    {
+      title: 'Operation',
+      width: 100,
+      dataIndex: 'operation',
+      render: (value, record, index) => {
+        return (
+          <div style={{ fontSize: '20px' }}>
+            <IconPlusCircleFill onClick={addConfig} />
+            <IconMinusCircleFill
+              onClick={() => {
+                removeConfig(index)
+              }}
+            />
+          </div>
+        )
+      },
+    },
   ]
 
   return (
     <div className="popup-container">
-      <Form
-        form={form}
-        initialValues={form.getFieldsValue()}
-        onChange={formChange}
-        labelCol={{ span: 10 }}
-        wrapperCol={{ span: 14 }}
-      >
-        <Form.Item field="fromDomain" label="From Domain">
-          <Input allowClear />
-        </Form.Item>
-        <Form.Item field="toDomain" label="To Domain">
-          <Input allowClear />
-        </Form.Item>
-        <Form.Item field="storage" label="Storage">
-          <Select options={storageOptions} allowClear />
-        </Form.Item>
-        <Form.Item field="field" label="field">
-          <Input allowClear />
-        </Form.Item>
-      </Form>
+      <Table columns={columns} data={configs} pagination={false} scroll={{ y: 250 }} />
     </div>
   )
 }

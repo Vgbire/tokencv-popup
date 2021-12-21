@@ -2,9 +2,9 @@
   "name": "popue",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
+    "serve": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@arco-design/web-react": "^2.24.1",
@@ -12,6 +12,7 @@
     "react-dom": "^17.0.0"
   },
   "devDependencies": {
+    "@types/node": "^16.11.12",
     "@vitejs/plugin-react": "^1.0.0",
     "sass": "^1.43.4",
     "vite": "^2.6.4"
