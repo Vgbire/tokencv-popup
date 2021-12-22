@@ -19,7 +19,7 @@ function App() {
   useEffect(() => {
     IS_PROD &&
       chrome.storage.sync.get('websiteConfigs', (data) => {
-        setConfigs(data.websiteConfigs)
+        if (data.websiteConfigs) setConfigs(data.websiteConfigs)
       })
   }, [])
 
