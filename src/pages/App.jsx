@@ -3,9 +3,11 @@ import './style.scss'
 import { Table, Input, Select, Tooltip } from '@arco-design/web-react'
 import { IconPlusCircleFill, IconMinusCircleFill } from '@arco-design/web-react/icon'
 import { IS_PROD } from '@/constant.js'
-import { copy } from '@/utils.js'
+import { debounce, copy } from '@/utils.js'
 
-function App() {
+IS_PROD && chrome.runtime.connect()
+
+export default function App() {
   const background = IS_PROD && chrome.extension.getBackgroundPage()
 
   const storageOptions = [
@@ -16,24 +18,30 @@ function App() {
 
   const [configs, setConfigs] = useState([{}])
 
+  const setStorage = debounce(function setStorage() {
+    if (IS_PROD) {
+      background.setStorage(configs)
+    }
+  }, 100)
+
   useEffect(() => {
     IS_PROD &&
       chrome.storage.sync.get('websiteConfigs', (data) => {
-        if (data.websiteConfigs) setConfigs(data.websiteConfigs)
+        if (data?.websiteConfigs) setConfigs(data.websiteConfigs)
       })
   }, [])
 
+  useEffect(() => {
+    setStorage()
+  }, [configs])
+
   function addConfig() {
     setConfigs([...configs, {}])
-    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
-    background.init()
   }
 
   function removeConfig(key) {
     if (configs.length > 1) {
       setConfigs(configs.filter((item, index) => key !== index))
-      IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
-      background.init()
     }
   }
 
@@ -44,8 +52,6 @@ function App() {
         return item
       }),
     )
-    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
-    background.init()
   }
 
   function changeToDomain(key, value) {
@@ -55,8 +61,6 @@ function App() {
         return item
       }),
     )
-    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
-    background.init()
   }
 
   function changeStorage(key, value) {
@@ -66,8 +70,6 @@ function App() {
         return item
       }),
     )
-    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
-    background.init()
   }
 
   function changeField(key, value) {
@@ -77,8 +79,6 @@ function App() {
         return item
       }),
     )
-    IS_PROD && chrome.storage.sync.set({ websiteConfigs: configs })
-    background.init()
   }
 
   const columns = [
@@ -192,5 +192,3 @@ function App() {
     </div>
   )
 }
-
-export default App

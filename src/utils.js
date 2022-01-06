@@ -1,5 +1,15 @@
 import { Message } from '@arco-design/web-react'
 
+export function debounce(func, delay) {
+  let timeout
+  return function () {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      func.apply(this, arguments)
+    }, delay)
+  }
+}
+
 export function copy(value) {
   // 动态创建 textarea 标签
   const textarea = document.createElement('textarea')
